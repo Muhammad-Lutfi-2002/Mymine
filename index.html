@@ -440,7 +440,19 @@ async function loadMusic() {
     if (!await fileExists(MUSIC_BUCKET, MUSIC_PATH)) return;
     audio.src = pubUrl(MUSIC_BUCKET, MUSIC_PATH) + '?t=' + Date.now();
     titleEl.textContent = localStorage.getItem('music_name') || 'Lagu Kenangan';
-    playAudio();
+    // Coba autoplay langsung dulu
+    audio.play().then(() => setPlayUI(true)).catch(() => {
+      // Browser blokir autoplay — langsung play saat user pertama tap/klik
+      setPlayUI(false);
+      statEl.textContent = '🎵 tap layar untuk putar';
+      const unlock = () => {
+        audio.play().then(() => setPlayUI(true)).catch(() => {});
+        document.removeEventListener('touchstart', unlock);
+        document.removeEventListener('click', unlock);
+      };
+      document.addEventListener('touchstart', unlock, { once: true });
+      document.addEventListener('click', unlock, { once: true });
+    });
   } catch(e) {}
 }
 mInput.addEventListener('change', async () => {
